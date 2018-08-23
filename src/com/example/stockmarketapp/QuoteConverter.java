@@ -113,9 +113,6 @@ public class QuoteConverter {
             stmt.setString(1, date + '%');
             rs = stmt.executeQuery();
 
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int columnsNumber = rsmd.getColumnCount();
-
             System.out.println("Highs for " + date);
             System.out.println("-----------------");
             while (rs.next()) {
@@ -150,9 +147,6 @@ public class QuoteConverter {
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, date + '%');
             rs = stmt.executeQuery();
-
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int columnsNumber = rsmd.getColumnCount();
 
             System.out.println("Lows for " + date);
             System.out.println("-----------------");
@@ -189,9 +183,6 @@ public class QuoteConverter {
             stmt.setString(1, date + '%');
             rs = stmt.executeQuery();
 
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int columnsNumber = rsmd.getColumnCount();
-
             System.out.println("Total Volume Traded On " + date);
             System.out.println("-----------------");
             while (rs.next()) {
@@ -210,9 +201,9 @@ public class QuoteConverter {
         }
     }
 
-    public static void main(String args[]) throws IOException, SQLException {
+    public static void main(String args[]) throws SQLException {
 
-        JsonArray jArr = getJson();
+        //JsonArray jArr = getJson();
 
         //insertRows(jArr);
         System.out.println("Enter a Date (YYYY-MM-DD): ");
