@@ -7,10 +7,8 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
+import java.util.Scanner;
 
 public class QuoteConverter {
 
@@ -62,7 +60,6 @@ public class QuoteConverter {
 
         try {
             conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
-            System.out.println("Connected...");
 
             System.out.println("inserting data...");
             for (int i = 0; i < quoteArr.size(); i++) {
@@ -99,18 +96,131 @@ public class QuoteConverter {
         }
     }
 
+    public static void getHighs(String date) throws SQLException {
+
+        Connection conn = null;
+        ResultSet rs = null;
+
+        try {
+
+            conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+
+            //sql statement retrieves each symbol and its highest price based on the day
+            String query =
+                    "SELECT DISTINCT symbol, MAX(price) as dateHigh FROM stock_quotes WHERE date LIKE ? GROUP BY symbol";
+
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, date + '%');
+            rs = stmt.executeQuery();
+
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int columnsNumber = rsmd.getColumnCount();
+
+            System.out.println("Highs for " + date);
+            System.out.println("-----------------");
+            while (rs.next()) {
+                String column1 = rs.getString("symbol") + ":";
+                String column2 = rs.getString("dateHigh");
+                System.out.print(column1 + " " + column2 + "\n");
+            }
+            System.out.println(" ");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
+
+    public static void getLows(String date) throws SQLException {
+
+        Connection conn = null;
+        ResultSet rs = null;
+
+        try {
+
+            conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+
+            //sql statement retrieves each symbol and its lowest price based on the day
+            String query =
+                    "SELECT DISTINCT symbol, MIN(price) as dateLow FROM stock_quotes WHERE date LIKE ? GROUP BY symbol";
+
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, date + '%');
+            rs = stmt.executeQuery();
+
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int columnsNumber = rsmd.getColumnCount();
+
+            System.out.println("Lows for " + date);
+            System.out.println("-----------------");
+            while (rs.next()) {
+                String column1 = rs.getString("symbol") + ":";
+                String column2 = rs.getString("dateLow");
+                System.out.print(column1 + " " + column2 + "\n");
+            }
+            System.out.println(" ");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
+
+    public static void volumeTraded(String date) throws SQLException {
+
+        Connection conn = null;
+        ResultSet rs = null;
+
+        try {
+
+            conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
+
+            //sql statement retrieves each symbol and its highest price based on the day
+            String query =
+                    "SELECT DISTINCT symbol, SUM(volume) as total_volume FROM stock_quotes WHERE date LIKE ? GROUP BY symbol";
+
+            PreparedStatement stmt = conn.prepareStatement(query);
+            stmt.setString(1, date + '%');
+            rs = stmt.executeQuery();
+
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int columnsNumber = rsmd.getColumnCount();
+
+            System.out.println("Total Volume Traded On " + date);
+            System.out.println("-----------------");
+            while (rs.next()) {
+                String column1 = rs.getString("symbol") + ":";
+                String column2 = rs.getString("total_volume");
+                System.out.print(column1 + " " + column2 + "\n");
+            }
+            System.out.println(" ");
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                conn.close();
+            }
+        }
+    }
 
     public static void main(String args[]) throws IOException, SQLException {
 
-
         JsonArray jArr = getJson();
 
-        System.out.println(jArr);
-
         //insertRows(jArr);
-        //System.out.println("data inserted...");
-
-
+        System.out.println("Enter a Date (YYYY-MM-DD): ");
+        Scanner sc = new Scanner(System.in);
+        String date = sc.nextLine();
+        getHighs(date);
+        getLows(date);
+        volumeTraded(date);
 
     }
 }
