@@ -113,6 +113,9 @@ public class QuoteConverter {
             stmt.setString(1, date + '%');
             rs = stmt.executeQuery();
 
+            ResultSetMetaData rsmd = rs.getMetaData();
+            int columnsNumber = rsmd.getColumnCount();
+
             System.out.println("Highs for " + date);
             System.out.println("-----------------");
             while (rs.next()) {
