@@ -76,14 +76,7 @@ public class QuoteConverter {
 
                 String date = j.get("date").getAsString();
 
-
-//                String[] dateTime = date.split("T");
-//                String dateOnly = dateTime[0];
-//                String timeOnly = dateTime[1].substring(0, 8);
-//
-//                System.out.println(timeOnly + ' ' + dateOnly);
                 System.out.println("inserting data...");
-
                 String query = "INSERT into stock_quotes (symbol, volume, price, date)" + "values (?, ?, ?, ?)";
                 PreparedStatement stmt = conn.prepareStatement(query);
                 stmt.setString(1, symbol);
@@ -255,6 +248,7 @@ public class QuoteConverter {
         System.out.println("Enter a Date (YYYY-MM-DD): ");
         Scanner sc = new Scanner(System.in);
         String date = sc.nextLine();
+
         getHighs(date);
         getLows(date);
         volumeTraded(date);
