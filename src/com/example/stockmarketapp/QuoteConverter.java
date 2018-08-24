@@ -8,8 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.sql.*;
-import java.time.format.DateTimeFormatter;
-import java.util.Date;
 import java.util.Scanner;
 
 public class QuoteConverter {
@@ -63,29 +61,32 @@ public class QuoteConverter {
         try {
             conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
 
+            System.out.println("inserting data...");
             for (int i = 0; i < quoteArr.size(); i++) {
 
+                // convert JsonElement to the more functional JsonObject
                 JsonElement e = quoteArr.get(i);
                 JsonObject j = e.getAsJsonObject();
 
                 String symbol = j.get("symbol").getAsString();
+                int volume    = j.get("volume").getAsInt();
+                float price   = j.get("price").getAsFloat();
+                String date   = j.get("date").getAsString();
 
-                int volume = j.get("volume").getAsInt();
-
-                float price = j.get("price").getAsFloat();
-
-                String date = j.get("date").getAsString();
-
-                System.out.println("inserting data...");
-                String query = "INSERT into stock_quotes (symbol, volume, price, date)" + "values (?, ?, ?, ?)";
+                String query = "INSERT into stock_quotes2 (symbol, volume, price, date)" + "values (?, ?, ?, ?)";
                 PreparedStatement stmt = conn.prepareStatement(query);
                 stmt.setString(1, symbol);
                 stmt.setInt(2, volume);
                 stmt.setFloat(3, price);
-                stmt.setString(4,  date);
 
+                // converts String date into datetime acceptable format
+                date = date.substring(0, 19);
+                String formattedDate = date.replace("T", " ");
+                Timestamp realTime = Timestamp.valueOf(formattedDate);
+                stmt.setTimestamp(4,  realTime);
+
+                // Inserts all rows with values
                 stmt.execute();
-                System.out.println("data inserted!");
             }
 
         } catch (SQLException e) {
@@ -100,7 +101,6 @@ public class QuoteConverter {
     public static void getHighs(String date) throws SQLException {
 
         Connection conn = null;
-        ResultSet rs = null;
 
         try {
 
@@ -108,14 +108,14 @@ public class QuoteConverter {
 
             //sql statement retrieves each symbol and its highest price based on the day
             String query =
-                    "SELECT symbol, MAX(price) as dateHigh FROM stock_quotes WHERE date LIKE ? GROUP BY symbol";
+                    "SELECT symbol, MAX(price) as dateHigh\n" +
+                    "FROM stock_quotes2\n" +
+                    "WHERE DATE(date) = ?\n" +
+                    "GROUP BY symbol";
 
             PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setString(1, date + '%');
-            rs = stmt.executeQuery();
-
-            ResultSetMetaData rsmd = rs.getMetaData();
-            int columnsNumber = rsmd.getColumnCount();
+            stmt.setString(1, date);
+            ResultSet rs = stmt.executeQuery();
 
             System.out.println("Highs for " + date);
             System.out.println("-----------------");
@@ -138,7 +138,6 @@ public class QuoteConverter {
     public static void getLows(String date) throws SQLException {
 
         Connection conn = null;
-        ResultSet rs = null;
 
         try {
 
@@ -146,11 +145,14 @@ public class QuoteConverter {
 
             //sql statement retrieves each symbol and its lowest price based on the day
             String query =
-                    "SELECT symbol, MIN(price) as dateLow FROM stock_quotes WHERE date LIKE ? GROUP BY symbol";
+                    "SELECT symbol, MIN(price) as dateLow\n" +
+                            "FROM stock_quotes2\n" +
+                            "WHERE DATE(date) = ?\n" +
+                            "GROUP BY symbol";
 
             PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setString(1, date + '%');
-            rs = stmt.executeQuery();
+            stmt.setString(1, date);
+            ResultSet rs = stmt.executeQuery();
 
             System.out.println("Lows for " + date);
             System.out.println("-----------------");
@@ -173,7 +175,6 @@ public class QuoteConverter {
     public static void volumeTraded(String date) throws SQLException {
 
         Connection conn = null;
-        ResultSet rs = null;
 
         try {
 
@@ -181,11 +182,14 @@ public class QuoteConverter {
 
             //sql statement retrieves each symbol and its highest price based on the day
             String query =
-                    "SELECT symbol, SUM(volume) as total_volume FROM stock_quotes WHERE date LIKE ? GROUP BY symbol";
+                    "SELECT symbol, SUM(volume) as total_volume\n" +
+                    "FROM stock_quotes2\n" +
+                    "WHERE DATE(date) = ?\n" +
+                    "GROUP BY symbol";
 
             PreparedStatement stmt = conn.prepareStatement(query);
             stmt.setString(1, date + '%');
-            rs = stmt.executeQuery();
+            ResultSet rs = stmt.executeQuery();
 
             System.out.println("Total Volume Traded On " + date);
             System.out.println("-----------------");
@@ -208,7 +212,6 @@ public class QuoteConverter {
     public static void getClosingPrice(String date) throws SQLException {
 
         Connection conn = null;
-        ResultSet rs = null;
 
         try {
 
@@ -216,11 +219,15 @@ public class QuoteConverter {
 
             //sql statement retrieves each symbol and its highest price based on the day
             String query =
-                    "select symbol, price, date FROM stock_quotes WHERE date like ? ORDER BY date DESC LIMIT 5";
+                    "SELECT symbol, price\n" +
+                    "FROM stock_quotes2\n" +
+                    "WHERE date = (SELECT MAX(date)\n" +
+                                  "from stock_quotes2\n" +
+                                  "where DATE(date) = ?)";
 
             PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setString(1, date + '%');
-            rs = stmt.executeQuery();
+            stmt.setString(1, date);
+            ResultSet rs = stmt.executeQuery();
 
             System.out.println("Closing Prices for " + date);
             System.out.println("-----------------");
@@ -243,7 +250,6 @@ public class QuoteConverter {
     public static void main(String args[]) throws SQLException, IOException {
 
         //JsonArray jArr = getJson();
-
         //insertRows(jArr);
         System.out.println("Enter a Date (YYYY-MM-DD): ");
         Scanner sc = new Scanner(System.in);
