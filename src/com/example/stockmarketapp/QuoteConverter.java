@@ -172,7 +172,7 @@ public class QuoteConverter {
         }
     }
 
-    public static void volumeTraded(String date) throws SQLException {
+    public static void getVolumeTraded(String date) throws SQLException {
 
         Connection conn = null;
 
@@ -188,7 +188,7 @@ public class QuoteConverter {
                     "GROUP BY symbol";
 
             PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setString(1, date + '%');
+            stmt.setString(1, date);
             ResultSet rs = stmt.executeQuery();
 
             System.out.println("Total Volume Traded On " + date);
@@ -217,7 +217,7 @@ public class QuoteConverter {
 
             conn = DriverManager.getConnection(CONN_STRING, USERNAME, PASSWORD);
 
-            //sql statement retrieves each symbol and its highest price based on the day
+            //sql statement retrieves each symbol and its highest price based on the date
             String query =
                     "SELECT symbol, price\n" +
                     "FROM stock_quotes2\n" +
@@ -247,18 +247,23 @@ public class QuoteConverter {
         }
     }
 
+    public static void getData(String date) throws SQLException {
+        getHighs(date);
+        getLows(date);
+        getVolumeTraded(date);
+        getClosingPrice(date);
+    }
+
     public static void main(String args[]) throws SQLException, IOException {
 
+        // these methods are only used ones to store data into database
         //JsonArray jArr = getJson();
         //insertRows(jArr);
+
         System.out.println("Enter a Date (YYYY-MM-DD): ");
         Scanner sc = new Scanner(System.in);
         String date = sc.nextLine();
-
-        getHighs(date);
-        getLows(date);
-        volumeTraded(date);
-        getClosingPrice(date);
+        getData(date);
 
     }
 }
